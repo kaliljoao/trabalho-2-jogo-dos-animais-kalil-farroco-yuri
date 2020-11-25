@@ -1,0 +1,43 @@
+animallist:- asserta(animals(['É um mamífero? ', ['Tem listras? ', 'É uma zebra?', 'É um leão?'], ['É um pássaro?',['Ele voa?','É uma águia?','É um pinguim?'],'É um lagarto?']])).
+
+/*Ask question*/
+ask(Node):- nth0(0,Node,A), write(A).
+
+/*Receive a node, ask question in first element ang get answer*/
+navigate(Node):-ask(Node),
+		read(Answ), 
+		checkYN(Answ, Node).
+
+checkYN(Answ,Node):- ((Answ=s) -> 
+		nth0(1,Node,NewNode), moveLR(Node, NewNode) ; 
+		nth0(2,Node,NewNode), moveLR(Node, NewNode) ).
+
+/*Check if element is a list*/
+is_list(List) :- var(List), !, fail.
+	is_list([_|Tail]) :- is_list(Tail).
+	is_list([]).
+
+/*navigate through the animals*/
+/*If actual node is a list, navigate through it again*/
+/*If it is an animal, check if it was guessed*/
+moveLR(Parent, Node):- (is_list(Node) -> 
+		navigate(Node); 
+		isAnimal(Parent,Node)).
+
+/*Check if animal was guessed*/
+isAnimal(Parent, Node):- write(Node),
+		read(Answ), (Answ=s -> write("Voce acertou!");write("Voce errou!")).
+
+init:- write('Welcome to the Animal Game!!'), nl, nl, animallist, ola.
+
+% seleciona uma resposta
+resposta(A) :- random(0,2,X), ((A=s,X=1,!);(A=n,X=0,!)).
+
+% main loop
+ola :- animallist, animals(X),
+        nl,
+        write('Advinhe minha resposta, responderei sim ou nao? (s p/ sim, n para nao e q para sair)'),nl,
+        write('Nao esqueca de finalizar sua resposta com . ex: s. ou n.'),nl,
+        navigate(X),
+        nl.
+

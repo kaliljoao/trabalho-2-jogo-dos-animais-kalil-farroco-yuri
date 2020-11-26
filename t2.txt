@@ -26,15 +26,34 @@ moveLR(Parent, Node):- (is_list(Node) ->
 
 /*Check if animal was guessed*/
 isAnimal(Parent, Node):- write(Node),
-		read(Answ), (Answ=s -> write("Voce acertou!");write("Voce errou!")).
+		read(Answ), (Answ=s -> write("Voce acertou!");isNotAnimal(Node)).
 
-init:- write('Welcome to the Animal Game!!'), nl, nl, animallist, ola.
+/* Se não for um animal, pede o nome do novo animal e a perguntar para att arvore */
+isNotAnimal(Node) :- write("Puxa! Eu não sei! Qual animal pensou?"), read(NewAnimal),nl,
+		write("Qual pergunta devo fazer para distinguir "), write(NewAnimal),write(" de "),splitString(Node, " ",S),write(S), read(NewQuestion),nl,
+		write("Agora digite qual a resposta certa para  "),write(NewAnimal),write(" (s / n)"),read(NewAwns),nl,
+		updateTree(Node, NewAnimal,NewQuestion, NewAwns).
+
+/* Separando uma string */
+splitString(String, CharToSplit, S) :- split_string(String, CharToSplit, "", L), nth0(2,L,S).
+
+updateTree(Node, NewAnimal, NewQuestion, NewAwns) :- (NewAwns=s -> 
+		animals(X), retract(animals(X)), substitute(Node,[NewQuestion,NewAnimal,Node],X,NewAnimals), asserta(animals(NewAnimals)), nl,ola;
+		animals(X), retract(animals(X)), substitute(Node,[NewQuestion,Node,NewAnimal],X,NewAnimals), asserta(animals(NewAnimals)), nl,ola
+		).
+
+/*To substitute an animal name for a list!*/
+substitute(_, _, [], []).
+substitute(X, Y, [X|T1], [Y|T2]) :- substitute(X, Y, T1, T2), !.
+substitute(X, Y, [H|T1], [H|T2]) :- \+ is_list(H), substitute(X, Y, T1, T2), !.
+substitute(X, Y, [H1|T1], [H2|T2]) :- substitute(X, Y, H1, H2), substitute(X, Y, T1, T2).
 
 % seleciona uma resposta
 resposta(A) :- random(0,2,X), ((A=s,X=1,!);(A=n,X=0,!)).
+init :- animallist.
 
 % main loop
-ola :- animallist, animals(X),
+ola :- animals(X),write(X),
         nl,
         write('Advinhe minha resposta, responderei sim ou nao? (s p/ sim, n para nao e q para sair)'),nl,
         write('Nao esqueca de finalizar sua resposta com . ex: s. ou n.'),nl,

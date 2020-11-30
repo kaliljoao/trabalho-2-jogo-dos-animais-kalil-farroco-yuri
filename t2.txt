@@ -1,42 +1,44 @@
 animallist:- asserta(animals(['É um mamífero? ', ['Tem listras? ', 'É uma zebra?', 'É um leão?'], ['É um pássaro?',['Ele voa?','É uma águia?','É um pinguim?'],'É um lagarto?']])).
 
-/*Ask question*/
+/* Acessa um nó da arvore, e escreve na tela a pergunta */
 ask(Node):- nth0(0,Node,A), write(A).
 
-/*Receive a node, ask question in first element ang get answer*/
+/* Chama função de ler nó e fazer a pergunta, verifica a resposta */
 navigate(Node):-ask(Node),
 		read(Answ), 
 		checkYN(Answ, Node).
 
+/* Verifica se a resposta foi s ou n. Em caso de 's' vai para nó a esquerda, caso 'n' vai para nó a direita */
 checkYN(Answ,Node):- ((Answ=s) -> 
 		nth0(1,Node,NewNode), moveLR(Node, NewNode) ; 
 		nth0(2,Node,NewNode), moveLR(Node, NewNode) ).
 
-/*Check if element is a list*/
+/* Verifica se nó é uma lista */
 is_list(List) :- var(List), !, fail.
 	is_list([_|Tail]) :- is_list(Tail).
 	is_list([]).
 
-/*navigate through the animals*/
-/*If actual node is a list, navigate through it again*/
-/*If it is an animal, check if it was guessed*/
+/* Função responsável pelo loop do jogo, navegando na lista */
+/* Se nó da vez for uma lista, continua as perguntas, se não verifica se o animal da folha é resposta certa ou não */
 moveLR(Parent, Node):- (is_list(Node) -> 
 		navigate(Node); 
 		isAnimal(Parent,Node)).
 
-/*Check if animal was guessed*/
+/* Verifica se foi o animal correto */
 isAnimal(Parent, Node):- write(Node),
 		read(Answ), (Answ=s -> write("Voce acertou!");isNotAnimal(Node)).
 
-/* Se não for um animal, pede o nome do novo animal e a perguntar para att arvore */
+/* Se não for um animal, pede o nome do novo animal e a pergunta para att arvore */
 isNotAnimal(Node) :- write("Puxa! Eu não sei! Qual animal pensou?"), read(NewAnimal),nl,
 		write("Qual pergunta devo fazer para distinguir "), write(NewAnimal),write(" de "),splitString(Node, " ",S),write(S), read(NewQuestion),nl,
 		write("Agora digite qual a resposta certa para  "),write(NewAnimal),write(" (s / n)"),read(NewAwns),nl,
 		concat('É um ', NewAnimal, NewAnimalQuestion), updateTree(Node, NewAnimalQuestion,NewQuestion, NewAwns).
 
 /* Separando uma string */
+/* É utilizado para pegar só o nome do animal e colocar na pergunta */
 splitString(String, CharToSplit, S) :- split_string(String, CharToSplit, "", L), nth0(2,L,S).
 
+/* Atualiza a arvore com a nova pergunta e novo animal */
 updateTree(Node, NewAnimal, NewQuestion, NewAwns) :- (NewAwns=s -> 
 		animals(X), retract(animals(X)), substitute(Node,[NewQuestion,NewAnimal,Node],X,NewAnimals), asserta(animals(NewAnimals)), nl,play;
 		animals(X), retract(animals(X)), substitute(Node,[NewQuestion,Node,NewAnimal],X,NewAnimals), asserta(animals(NewAnimals)), nl,play
@@ -45,13 +47,13 @@ updateTree(Node, NewAnimal, NewQuestion, NewAwns) :- (NewAwns=s ->
 /* Formando uma pergunta com o animal recebido */
 concat(Str1,Str2,Str3) :- string_concat(Str1,Str2,Aux),string_concat(Aux,'?', Str3).
 
-/*To substitute an animal name for a list!*/
+/* Trocando um animal por uma lista */
 substitute(_, _, [], []).
 substitute(X, Y, [X|T1], [Y|T2]) :- substitute(X, Y, T1, T2), !.
 substitute(X, Y, [H|T1], [H|T2]) :- \+ is_list(H), substitute(X, Y, T1, T2), !.
 substitute(X, Y, [H1|T1], [H2|T2]) :- substitute(X, Y, H1, H2), substitute(X, Y, T1, T2).
 
-% seleciona uma resposta
+% Inicio do jogo
 ola :- animallist, play.
 
 % main loop

@@ -10,8 +10,8 @@ navigate(Node):-ask(Node),
 
 /* Verifica se a resposta foi s ou n. Em caso de 's' vai para nó a esquerda, caso 'n' vai para nó a direita */
 checkYN(Answ,Node):- ((Answ=s) -> 
-		nth0(1,Node,NewNode), moveLR(Node, NewNode) ; 
-		nth0(2,Node,NewNode), moveLR(Node, NewNode) ).
+		nth0(1,Node,NewNode), moveLR(NewNode) ; 
+		nth0(2,Node,NewNode), moveLR(NewNode) ).
 
 /* Verifica se nó é uma lista */
 is_list(List) :- var(List), !, fail.
@@ -20,12 +20,12 @@ is_list(List) :- var(List), !, fail.
 
 /* Função responsável pelo loop do jogo, navegando na lista */
 /* Se nó da vez for uma lista, continua as perguntas, se não verifica se o animal da folha é resposta certa ou não */
-moveLR(Parent, Node):- (is_list(Node) -> 
+moveLR(Node):- (is_list(Node) -> 
 		navigate(Node); 
-		isAnimal(Parent,Node)).
+		isAnimal(Node)).
 
 /* Verifica se foi o animal correto */
-isAnimal(Parent, Node):- write(Node),
+isAnimal(Node):- write(Node),
 		read(Answ), (Answ=s -> write("Voce acertou!");isNotAnimal(Node)).
 
 /* Se não for um animal, pede o nome do novo animal e a pergunta para att arvore */

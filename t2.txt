@@ -1,4 +1,5 @@
-animallist:- asserta(animals(['É um mamífero? ', ['Tem listras? ', 'É uma zebra?', 'É um leão?'], ['É um pássaro?',['Ele voa?','É uma águia?','É um pinguim?'],'É um lagarto?']])).
+:- dynamic animals/1.
+animals(['É um mamífero? ', ['Tem listras? ', 'É uma zebra?', 'É um leão?'], ['É um pássaro?',['Ele voa?','É uma águia?','É um pinguim?'],'É um lagarto?']]).
 
 /* Acessa um nó da arvore, e escreve na tela a pergunta */
 ask(Node):- nth0(0,Node,A), write(A).
@@ -6,17 +7,12 @@ ask(Node):- nth0(0,Node,A), write(A).
 /* Chama função de ler nó e fazer a pergunta, verifica a resposta */
 navigate(Node):-ask(Node),
 		read(Answ), 
-		checkYN(Answ, Node).
+		((Answ=q) -> save('t2.txt'),nl,write("ate breve!"), !, fail; checkYN(Answ, Node)).
 
 /* Verifica se a resposta foi s ou n. Em caso de 's' vai para nó a esquerda, caso 'n' vai para nó a direita */
 checkYN(Answ,Node):- ((Answ=s) -> 
 		nth0(1,Node,NewNode), moveLR(NewNode) ; 
 		nth0(2,Node,NewNode), moveLR(NewNode) ).
-
-/* Verifica se nó é uma lista */
-is_list(List) :- var(List), !, fail.
-	is_list([_|Tail]) :- is_list(Tail).
-	is_list([]).
 
 /* Função responsável pelo loop do jogo, navegando na lista */
 /* Se nó da vez for uma lista, continua as perguntas, se não verifica se o animal da folha é resposta certa ou não */
@@ -26,7 +22,7 @@ moveLR(Node):- (is_list(Node) ->
 
 /* Verifica se foi o animal correto */
 isAnimal(Node):- write(Node),
-		read(Answ), (Answ=s -> write("Voce acertou!");isNotAnimal(Node)).
+		read(Answ), (Answ=s -> nl,write("Voce acertou!"),nl,play;isNotAnimal(Node)).
 
 /* Se não for um animal, pede o nome do novo animal e a pergunta para att arvore */
 isNotAnimal(Node) :- write("Puxa! Eu não sei! Qual animal pensou?"), read(NewAnimal),nl,
@@ -40,8 +36,8 @@ splitString(String, CharToSplit, S) :- split_string(String, CharToSplit, "", L),
 
 /* Atualiza a arvore com a nova pergunta e novo animal */
 updateTree(Node, NewAnimal, NewQuestion, NewAwns) :- (NewAwns=s -> 
-		animals(X), retract(animals(X)), substitute(Node,[NewQuestion,NewAnimal,Node],X,NewAnimals), asserta(animals(NewAnimals)), nl,play;
-		animals(X), retract(animals(X)), substitute(Node,[NewQuestion,Node,NewAnimal],X,NewAnimals), asserta(animals(NewAnimals)), nl,play
+		animals(X), retract(animals(X)), substitute(Node,[NewQuestion,NewAnimal,Node],X,NewAnimals), asserta(animals(NewAnimals)), nl, save('t2.txt'), play;
+		animals(X), retract(animals(X)), substitute(Node,[NewQuestion,Node,NewAnimal],X,NewAnimals), asserta(animals(NewAnimals)), nl, save('t2.txt'), play
 		).
 
 /* Formando uma pergunta com o animal recebido */
@@ -53,8 +49,44 @@ substitute(X, Y, [X|T1], [Y|T2]) :- substitute(X, Y, T1, T2), !.
 substitute(X, Y, [H|T1], [H|T2]) :- \+ is_list(H), substitute(X, Y, T1, T2), !.
 substitute(X, Y, [H1|T1], [H2|T2]) :- substitute(X, Y, H1, H2), substitute(X, Y, T1, T2).
 
+/* Salvando o jogo */
+save(ToFile) :-      
+       telling(Old),      /* current write output */
+       tell(ToFile),      /* open this file */ 
+       listing(animals),  /* list all clauses in memory */
+	   write('/* Acessa um nó da arvore, e escreve na tela a pergunta */'),nl,
+	   listing(ask),
+	   write('/* Chama função de ler nó e fazer a pergunta, verifica a resposta */'),nl,
+	   listing(navigate),
+	   write('/* Verifica se a resposta foi s ou n. Em caso de \'s\' vai para nó a esquerda, caso \'n\' vai para nó a direita */'),nl,
+	   listing(checkYN),
+	   write('/* Função responsável pelo loop do jogo, navegando na lista */'),nl,
+	   write('/* Se nó da vez for uma lista, continua as perguntas, se não verifica se o animal da folha é resposta certa ou não */'),nl,
+	   listing(moveLR),
+	   write('/* Verifica se foi o animal correto */'),nl,
+	   listing(isAnimal),
+	   write('/* Se não for um animal, pede o nome do novo animal e a pergunta para att arvore */'),nl,
+	   listing(isNotAnimal),
+	   write('/* Separando uma string */'),nl,
+	   write('/* É utilizado para pegar só o nome do animal e colocar na pergunta */'),nl,
+	   listing(splitString),
+	   write('/* Atualiza a arvore com a nova pergunta e novo animal */'),nl,
+	   listing(updateTree),
+	   write('/* Formando uma pergunta com o animal recebido */'),nl,
+	   listing(concat),
+	   write('/* Trocando um animal por uma lista */'),nl,
+	   listing(substitute),
+	   write('/* Salvando o jogo */'),nl,
+	   listing(save),
+	   write('% Inicio do jogo'),nl,
+	   listing(ola),
+	   write('% main loop'),nl,
+	   listing(play),
+       told,              /* close ToFile */ 
+       tell(Old).         /* resume this output */ 
+
 % Inicio do jogo
-ola :- animallist, play.
+ola :- animals(X), asserta(X), play.
 
 % main loop
 play :- animals(X),
